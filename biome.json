@@ -1,37 +1,78 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
-  "files": {
-    "ignoreUnknown": true,
-    "includes": ["**", "!node_modules", "!.next", "!dist", "!build"]
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 2
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "suspicious": {
-        "noUnknownAtRules": "off"
-      }
-    },
-    "domains": {
-      "next": "recommended",
-      "react": "recommended"
-    }
-  },
-  "assist": {
-    "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
-    }
-  }
+	"$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"indentWidth": 2
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single",
+			"semicolons": "asNeeded"
+		}
+	},
+	"linter": {
+		"domains": {
+			"next": "recommended",
+			"react": "recommended"
+		},
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"nursery": {
+				"useSortedClasses": {
+					"options": {},
+					"level": "error",
+					"fix": "safe"
+				}
+			},
+			"style": {
+				"useBlockStatements": {
+					"options": {},
+					"level": "error",
+					"fix": "safe"
+				}
+			}
+		}
+	},
+	"files": {
+		"ignoreUnknown": true,
+		"includes": ["**", "!node_modules", "!.next", "!dist", "!build"]
+	},
+	"vcs": {
+		"clientKind": "git",
+		"enabled": true,
+		"useIgnoreFile": true
+	},
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": {
+					"level": "on",
+					"options": {
+						"groups": [
+							":URL:",
+							":BUN:",
+							":NODE:",
+							":PACKAGE:",
+							":PACKAGE_WITH_PROTOCOL:",
+							"@/types",
+							"@/utils",
+							"@/hooks",
+							"@/configs",
+							"@/constants",
+							"@/models",
+							"@/services",
+							"@/components",
+							"@/styles",
+							":BLANK_LINE:",
+							":PATH:"
+						]
+					}
+				},
+				"useSortedAttributes": "on",
+				"useSortedProperties": "on"
+			}
+		}
+	}
 }

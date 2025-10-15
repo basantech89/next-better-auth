@@ -5,16 +5,18 @@ import { Label } from '../label'
 import { useField } from '@/hooks/use-form'
 import { cn } from '@/lib/utils'
 
-export default React.memo(function TextField({
+export type TextFieldProps = React.ComponentProps<'input'> & {
+	id?: string
+	label?: string
+	name: string
+}
+
+const TextField = React.memo(function InnerTextField({
 	id,
 	label,
 	name,
 	...rest
-}: {
-	id: string
-	label?: string
-	name: string
-} & React.ComponentProps<'input'>) {
+}: TextFieldProps) {
 	const { error, ...field } = useField(name)
 
 	return (
@@ -34,3 +36,5 @@ export default React.memo(function TextField({
 		</div>
 	)
 })
+
+export { TextField }

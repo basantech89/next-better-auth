@@ -1,10 +1,18 @@
 'use client'
 
+import Form from 'next/form'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import TextField from '@/components/ui/forms/text-field'
+import { signup } from '@/actions/auth'
+import {
+	Button,
+	Card,
+	CardContent,
+	PasswordField,
+	TextField,
+} from '@/components/ui'
 import { useForm } from '@/hooks/use-form'
 import { routes } from '@/utils/constants'
 import { z } from '@/utils/zod'
@@ -55,19 +63,31 @@ const defaultValues: SignupFormData = {
 }
 
 export function SignupForm() {
-	const { AppForm, isValid } = useForm({
+	const router = useRouter()
+
+	const action = async (formData: FormData) => {
+		const data = await signup(formData)
+
+		if (!data.success) {
+			toast.error(data.error)
+		} else {
+			toast.success('Account created successfully!')
+			router.push(routes.home)
+		}
+	}
+
+	const { AppForm, isValid, isPending, formAction } = useForm({
 		defaultValues,
 		schema: signupDataSchema,
+		action,
 	})
-
-	// console.log('valid', isValid)
 
 	return (
 		<div className="flex flex-col gap-6">
 			<Card className="overflow-hidden p-0">
 				<CardContent className="grid p-0">
 					<AppForm>
-						<form className="w-full p-6 md:p-8">
+						<Form action={formAction} className="w-full p-6 md:p-8">
 							<div className="flex flex-col gap-6">
 								<div className="flex flex-col items-center text-center">
 									<h1 className="font-bold text-2xl">Welcome</h1>
@@ -101,23 +121,27 @@ export function SignupForm() {
 									required
 									type="email"
 								/>
-								<TextField
+								<PasswordField
 									id="password"
 									label="Password"
 									name="password"
 									placeholder="Password"
 									required
-									// type="password"
+									showTooltip
 								/>
-								<TextField
+								<PasswordField
 									id="confirmPassword"
 									label="Confirm Password"
 									name="confirmPassword"
 									placeholder="Confirm Password"
 									required
-									// type="password"
+									showTooltip
 								/>
-								<Button className="w-full" type="submit">
+								<Button
+									className="w-full"
+									disabled={!isValid || isPending}
+									type="submit"
+								>
 									Sign up
 								</Button>
 								<div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-border after:border-t">
@@ -165,13 +189,13 @@ export function SignupForm() {
 									</Link>
 								</div>
 							</div>
-						</form>
+						</Form>
 					</AppForm>
 				</CardContent>
 			</Card>
 			<div className="text-balance text-center text-muted-foreground text-xs *:[a]:underline *:[a]:underline-offset-4 *:[a]:hover:text-primary">
-				By clicking continue, you agree to our <a href="#">Terms of Service</a>{' '}
-				and <a href="#">Privacy Policy</a>.
+				By clicking continue , you agree to our <a href="/">Terms of Service</a>
+				&nbsp;and <a href="/"> Privacy Policy</a>.
 			</div>
 		</div>
 	)

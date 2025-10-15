@@ -1,13 +1,19 @@
 'use client'
 
+import Form from 'next/form'
 import Link from 'next/link'
-import { useActionState } from 'react'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
-import { signIn } from '@/actions/auth'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import TextField from '@/components/ui/forms/text-field'
-import { Label } from '@/components/ui/label'
+import { signin } from '@/actions/auth'
+import {
+	Button,
+	Card,
+	CardContent,
+	Label,
+	PasswordField,
+	TextField,
+} from '@/components/ui'
 import { useForm } from '@/hooks/use-form'
 import { routes } from '@/utils/constants'
 import { z } from '@/utils/zod'
@@ -31,25 +37,31 @@ const defaultValues: LoginFormData = {
 }
 
 export function LoginForm() {
-	const action = async (prevState: LoginFormData, payload: FormData) => {
-		await signIn(payload)
+	const router = useRouter()
 
-		return { ...prevState, success: true }
+	const action = async (formData: FormData) => {
+		const data = await signin(formData)
+
+		if (!data.success) {
+			toast.error(data.error)
+		} else {
+			toast.success('Logged in successfully!')
+			router.push(routes.home)
+		}
 	}
 
-	const [, loginAction] = useActionState<LoginFormData, FormData>(
-		action,
+	const { AppForm, isValid, isPending, formAction } = useForm({
 		defaultValues,
-	)
-
-	const { AppForm } = useForm({ defaultValues, schema: loginDataSchema })
+		schema: loginDataSchema,
+		action,
+	})
 
 	return (
 		<div className="flex flex-col gap-6">
 			<Card className="overflow-hidden p-0">
 				<CardContent className="grid p-0">
 					<AppForm>
-						<form action={loginAction} className="w-full p-6 md:p-8">
+						<Form action={formAction} className="w-full p-6 md:p-8">
 							<div className="flex flex-col gap-6">
 								<div className="flex flex-col items-center text-center">
 									<h1 className="font-bold text-2xl">Welcome back</h1>
@@ -59,7 +71,12 @@ export function LoginForm() {
 								</div>
 								<TextField id="email" label="Email" name="email" type="email" />
 								<div className="grid gap-3">
-									<div className="flex items-center">
+									<PasswordField
+										id="password"
+										name="password"
+										placeholder="Password"
+										required
+									>
 										<Label htmlFor="password">Password</Label>
 										<a
 											className="ml-auto text-sm underline-offset-2 hover:underline"
@@ -67,11 +84,14 @@ export function LoginForm() {
 										>
 											Forgot your password?
 										</a>
-									</div>
-									<TextField id="password" name="password" type="password" />
+									</PasswordField>
 								</div>
 
-								<Button className="w-full" type="submit">
+								<Button
+									className="w-full"
+									disabled={!isValid || isPending}
+									type="submit"
+								>
 									Login
 								</Button>
 								<div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-border after:border-t">
@@ -119,7 +139,7 @@ export function LoginForm() {
 									</Link>
 								</div>
 							</div>
-						</form>
+						</Form>
 					</AppForm>
 				</CardContent>
 			</Card>

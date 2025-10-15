@@ -1,5 +1,7 @@
 import type { StandardSchemaV1 } from 'better-auth'
-import React from 'react'
+import type Form from 'next/form'
+import React, { useActionState } from 'react'
+import { toast } from 'react-hot-toast'
 
 import { keys, values as objValues } from '@/utils/object'
 import type { Dict } from '@/utils/types'
@@ -218,7 +220,9 @@ export function useField(name: string) {
 	)
 
 	const onChange = React.useCallback(
-		(event: React.ChangeEvent<HTMLInputElement>) => {
+		<T extends HTMLInputElement | HTMLTextAreaElement>(
+			event: React.ChangeEvent<T>,
+		) => {
 			form.setValue(name, event.target.value)
 		},
 		[name, form],
@@ -231,22 +235,76 @@ export function useField(name: string) {
 	return { name, value, onChange, onBlur, error }
 }
 
+export type ActionResult<T> =
+	| { success: false; error: string }
+	| { success: true; data?: T }
+
+type ServerAction = <T>(
+	formData: FormData,
+) => void | Promise<void> | Promise<ActionResult<T>>
+
+type FormState = {
+	isFormValid: boolean
+	formError: string
+}
+
 export function useForm<K extends string, V extends FormValue>({
 	defaultValues,
 	schema,
+	action,
 }: {
-	defaultValues: Dict<K, V>
+	defaultValues: Awaited<Dict<K, V>>
 	schema?: z.ZodObject<Dict<K, z.ZodType<V>>>
+	action: ServerAction
 }) {
 	const formRef = React.useRef(createFormStore(defaultValues, schema))
 
+	const initialFormState: FormState = {
+		isFormValid: true,
+		formError: '',
+	}
+
+	const handleSubmit = async (
+		state: Awaited<FormState>,
+		formData: FormData,
+	) => {
+		try {
+			const result = await action(formData)
+
+			if (!result?.success) {
+				return {
+					...state,
+					isFormValid: false,
+					formError: result?.error || 'Something went wrong. Please try again.',
+				}
+			}
+
+			return { ...state, isFormValid: true, formError: '' }
+		} catch (error) {
+			return {
+				...state,
+				isFormValid: false,
+				formError:
+					(error as Error)?.message ||
+					'Something went wrong. Please try again.',
+			}
+		}
+	}
+
+	const [state, formAction, isPending] = useActionState(
+		handleSubmit,
+		initialFormState,
+	)
+
 	const AppForm = React.useMemo(
 		() =>
-			({ children }: { children: React.ReactNode }) => (
-				<formContext.Provider value={formRef.current}>
-					{children}
-				</formContext.Provider>
-			),
+			({ children }: Omit<React.ComponentProps<typeof Form>, 'action'>) => {
+				return (
+					<formContext.Provider value={formRef.current}>
+						{children}
+					</formContext.Provider>
+				)
+			},
 		[],
 	)
 
@@ -266,5 +324,5 @@ export function useForm<K extends string, V extends FormValue>({
 		getValuesSnapshot,
 	)
 
-	return { AppForm, values, errors, isValid }
+	return { AppForm, values, errors, isValid, isPending, formAction, ...state }
 }
